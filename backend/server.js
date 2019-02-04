@@ -1,7 +1,55 @@
 const http = require('http');
+const expressApp = require('./app');
 
-const server = http.createServer((req, res) => {
-  res.end('This is my server response!')
+const normalizePort = val => {
+	const port = parseInt(val, 10);
+
+	if (isNaN(port)) {
+		return val;
+	}
+
+	if (port >= 0) {
+		return port;
+	}
+
+	return false;
+};
+
+// normalizePort returns valid port whether it is provided as a number or string
+const port = normalizePort(process.env.PORT || 3000);
+
+// express app needs to know the port we are on.
+expressApp.set('port', port);
+
+const errorHandler = error => {
+	if (error.syscall !== 'listen') {
+		throw error;
+	}
+
+	const address = server.address();
+	const bind = typeof address === 'string' ? 'pipe ' + address : 'port: ' + port;
+	switch (error.code) {
+		case 'EACCES':
+			console.error(bind + ' requires elevated privileges.');
+			process.exit(1);
+			break;
+		case 'EADDRINUSE':
+			console.error(bind + ' is already in use.');
+			process.exit(1);
+			break;
+		default:
+			throw error;
+	}
+};
+
+//node create a server using the express app
+const server = http.createServer(expressApp);
+
+server.on('error', errorHandler);
+server.on('listening', () => {
+	const address = server.address();
+	const bind = typeof address === 'string' ? 'pipe ' + address : 'port: ' + port;
+	console.log('listening on ' + bind);
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(port);
